@@ -1,8 +1,11 @@
 #include "block.cpp"
 
+// represents the moving ball
 class Ball : public Block {
     public:
         static constexpr float SPEED = 300;
+        float vx, vy;
+        Ball(int x, int y, int width, int height);
         void move(float timestep);
         bool checkCollision(Block block, float timestep);
         void checkWall();
@@ -10,8 +13,6 @@ class Ball : public Block {
         bool collides(SDL_FRect *other);
         bool collidesX(SDL_FRect *other, float timestep);
         bool collidesY(SDL_FRect *other, float timestep);
-        Ball(int x, int y, int width, int height);
-        float vx, vy;
 };
 
 Ball::Ball(int x, int y, int width, int height) : Block(x,y,width,height, 255,255,255) {
@@ -19,6 +20,7 @@ Ball::Ball(int x, int y, int width, int height) : Block(x,y,width,height, 255,25
 	vy = -SPEED;
 }
 
+// Checks if the object overlaps with a rect
 bool Ball::collides(SDL_FRect *other) {
     if ((rect->x > other->x && rect->x < other->x+other->w) || 
         (rect->x+rect->w > other->x && rect->x+rect->w < other->x+other->w)){
@@ -30,6 +32,7 @@ bool Ball::collides(SDL_FRect *other) {
     return false;
 }
 
+// checks for a collision on the x axis
 bool Ball::collidesX(SDL_FRect *other, float timestep) {
     rect->x += vx * timestep;
     bool res = collides(other);
@@ -37,6 +40,7 @@ bool Ball::collidesX(SDL_FRect *other, float timestep) {
     return res;
 }
 
+// checks for a collision on the y axis
 bool Ball::collidesY(SDL_FRect *other, float timestep) {
     rect->y += vy * timestep;
     bool res = collides(other);
@@ -44,11 +48,13 @@ bool Ball::collidesY(SDL_FRect *other, float timestep) {
     return res;
 }
 
+// update position
 void Ball::move(float timestep) {
 	rect->x += vx * timestep;
 	rect->y += vy * timestep;
 }
 
+// checks if the objects collide and adapts the velocity if needed
 bool Ball::checkCollision(Block block, float timestep) {
     if (collidesY(block.rect, timestep)) {
         vy *= -1;
@@ -63,6 +69,8 @@ bool Ball::checkCollision(Block block, float timestep) {
     return false;
 }
 
+// collision with player
+// changes the x velocity based on hit location
 bool Ball::checkPlayer(Block block, float timestep) {
     if (collidesY(block.rect, timestep)) {
         rect->y += vy * timestep;
@@ -75,6 +83,7 @@ bool Ball::checkPlayer(Block block, float timestep) {
     return false;
 }
 
+// bounce off walls
 void Ball::checkWall(){
     if (rect->x < 0) { 
         rect->x = 0;

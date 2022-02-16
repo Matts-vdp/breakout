@@ -1,5 +1,6 @@
 #include "block.cpp"
 
+// represents player rectangle
 class Player : public Block {
     public:
         void handleEvent(SDL_Event& e);
@@ -17,11 +18,12 @@ Player::Player(int x, int y, int width, int height) : Block(x,y,width,height, 25
     vx = 0;
 }
 
+// updates the player location
 void Player::move(float timestep) {
 	rect->x += vx * timestep;
 }
 
-
+// moves the player according the pressed key
 void Player::handleEvent(SDL_Event& e) {
 	if (e.type == SDL_KEYDOWN && e.key.repeat == 0) {
 		switch (e.key.keysym.sym) {
@@ -37,6 +39,7 @@ void Player::handleEvent(SDL_Event& e) {
 	}
 }
 
+// limits the movement to the screen
 void Player::checkWall(){
     if (rect->x < 0) { 
         rect->x = 0;

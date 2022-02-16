@@ -24,67 +24,71 @@ std::list<Block> initBlocks(){
 	return l;
 }
 
+bool event(Player *player) {
+	SDL_Event e;
+	while( SDL_PollEvent( &e ) != 0 ) {
+		if( e.type == SDL_QUIT ) {
+			return true;
+		}
+		(*player).handleEvent(e);
+	}
+	return false;
+}
+
+void update(Player *player, Ball *ball, std::list<Block> *blocks, float timestep) {
+	(*player).move(timestep);
+	(*player).checkWall();
+
+	(*ball).move(timestep);
+	for (std::list<Block>::iterator i=(*blocks).begin(); i!=(*blocks).end(); i++) {
+			if ((*ball).checkCollision(*i, timestep)){
+				(*blocks).erase(i);
+			}
+	}
+	(*ball).checkPlayer((*player), timestep);
+	(*ball).checkWall();
+}
+
+void render(SDL_Renderer *ren, Player player, Ball ball, std::list<Block> blocks){
+	SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
+	SDL_RenderClear(ren);
+
+	player.render(ren);
+	ball.render(ren);
+	for (Block b: blocks) {
+		b.render(ren);
+	}
+	
+	SDL_RenderPresent(ren);
+}
+
 void gameloop(SDL_Renderer *ren) {
 	bool quit = false;
-	SDL_Event e;
 	Ball ball((SCREEN_WIDTH-7)/2,SCREEN_HEIGHT/4*3,15,15);
 	Player player((SCREEN_WIDTH-150)/2,SCREEN_HEIGHT-20*2,150,10);
 	std::list<Block> blocks = initBlocks();
-
 	Uint64 time = SDL_GetTicks64();
 
 	while (!quit) {
-		while( SDL_PollEvent( &e ) != 0 ) {
-			if( e.type == SDL_QUIT ) {
-				quit = true;
-			}
-			player.handleEvent(e);
-		}
+		quit = event(&player);
 		Uint64 newtime = SDL_GetTicks64();
 		float timestep = (newtime-time)/1000.f;
-
-		player.move(timestep);
-		player.checkWall();
-
-		ball.move(timestep);
-		for (std::list<Block>::iterator i=blocks.begin(); i!=blocks.end(); i++) {
-			 if (ball.checkCollision(*i, timestep)){
-				 blocks.erase(i);
-			 }
-		}
-		ball.checkPlayer(player, timestep);
-		ball.checkWall();
-		
-		SDL_SetRenderDrawColor(ren, 0, 0, 0, 255);
-		SDL_RenderClear(ren);
-
-		player.render(ren);
-		ball.render(ren);
-		for (Block b: blocks) {
-			b.render(ren);
-		}
-		
-		SDL_RenderPresent(ren);
-		SDL_Delay(5);
+		update(&player, &ball, &blocks, timestep);
+		render(ren, player, ball, blocks);
 		time = newtime;
 	}
 }
 
 
-int main( int argc, char* args[] )
-{
+int main( int argc, char* args[] ){
 	SDL_Window* window = NULL;
-
-	if( SDL_Init( SDL_INIT_VIDEO ) < 0 )
-	{
+	if( SDL_Init( SDL_INIT_VIDEO ) < 0 ){
 		printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
 		return 1;
 	}
 
-	//Create window
 	window = SDL_CreateWindow( "Breakout", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN );
-	if( window == NULL )
-	{
+	if( window == NULL ){
 		printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
 		return 1;
 	}
@@ -93,6 +97,5 @@ int main( int argc, char* args[] )
 	gameloop(ren);	
 	SDL_DestroyWindow( window );
 	SDL_Quit();
-
 	return 0;
 }
